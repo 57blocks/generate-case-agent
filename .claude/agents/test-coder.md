@@ -26,8 +26,8 @@ Read these artifact files before writing any code:
 Before writing anything, read:
 1. All page object files listed in the Design Plan
 2. The target test file (UPDATE mode) or a similar test (ADD mode) for pattern reference
-3. `fixtures.ts` — to confirm fixture injection signatures
-4. `utils/constants.ts` — to confirm RoleName values
+3. The project's fixtures file (commonly `fixtures.ts`, `tests/fixtures.ts`, or `playwright/fixtures.ts`) — to confirm fixture injection signatures
+4. The project's constants file if it has one (commonly `utils/constants.ts`, `tests/constants.ts`) — to confirm role / enum values
 
 ---
 
@@ -133,15 +133,19 @@ while (!done) {
 
 ### ADD Mode — New Test File
 
+Import paths depend on the target project's layout. Look at one neighboring test file in the same directory to learn the import convention before writing.
+
 ```typescript
-import { test, expect } from "../../fixtures";
-import { RoleName } from "../../utils/constants";
+// Adjust import paths to match the target project (commonly "../../fixtures",
+// "../fixtures", "@/tests/fixtures", etc.)
+import { test, expect } from "<project-fixtures-import>";
+import { RoleName } from "<project-constants-import>";
 
 // Case ID: {CASE_ID}
 // Case Name: {CASE_NAME}
 // Precondition: {PRECONDITION_SUMMARY}
 test.use({ loginRole: RoleName.{ROLE} });
-// For connector tests that take 40-90s:
+// For long-running / connector tests:
 // test.setTimeout(300_000);
 
 test("{CASE_NAME}", async ({ {fixture1}, {fixture2} }) => {
@@ -173,25 +177,25 @@ test("{CASE_NAME}", async ({ {fixture1}, {fixture2} }) => {
 When multiple test blocks share state:
 
 ```typescript
-import { test, expect } from "../../fixtures";
-import { RoleName } from "../../utils/constants";
+import { test, expect } from "<project-fixtures-import>";
+import { RoleName } from "<project-constants-import>";
 
 test.describe.configure({ mode: 'serial' });
 test.use({ loginRole: RoleName.{ROLE} });
 
 // Shared state — only primitive values, never page objects
-let caseName: string;
-let documentGroupJobId: number;
+let sharedRecordName: string;
+let sharedJobId: number;
 
-test("Step group 1: {description}", async ({ casesPage }) => {
+test("Step group 1: {description}", async ({ {fixtureA} }) => {
   test.setTimeout({N}_000);
   // ...
-  caseName = result.caseName;
+  sharedRecordName = result.name;
 });
 
-test("Step group 2: {description}", async ({ annotatePage }) => {
+test("Step group 2: {description}", async ({ {fixtureB} }) => {
   test.setTimeout({M}_000);
-  annotatePage.setCaseName(caseName); // use shared state
+  {fixtureB}.setRecordName(sharedRecordName); // use shared state
   // ...
 });
 ```
@@ -237,10 +241,9 @@ Fix any forbidden patterns reported.
 - [ ] All reusable operations are in page object methods (not inline in test body)
 - [ ] No duplicate methods created — checked against existing page objects
 - [ ] All selectors come from the Design Plan's "Validated Selectors Summary" — no invented selectors
-- [ ] Files tab assertions use filename WITHOUT extension
-- [ ] Connector tests have `test.setTimeout(300_000)`
+- [ ] Long-running / connector tests have `test.setTimeout(300_000)` if the spec marks them as such
 - [ ] Popover panel items use `getByRole("button")` (not `menuitem`) per Design Plan
-- [ ] SharePoint connector uses the DMS factory path (same as OneDrive/Dropbox)
+- [ ] Any project-specific assertion conventions noted in the Design Plan have been respected
 
 ---
 

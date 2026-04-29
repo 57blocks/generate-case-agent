@@ -114,12 +114,6 @@ for (let i = 0; i < 10; i++) {
 }
 ```
 
-**Files tab assertion includes extension:**
-```typescript
-// Remove .pdf, .docx etc from the filename in assertions
-await filesPage.verifyFilesPresent(["Police Report"]); // not "Police Report.pdf"
-```
-
 **Assertion value mismatch:**
 ```typescript
 // Read the actual error: "Expected: 'X', Received: 'Y'"

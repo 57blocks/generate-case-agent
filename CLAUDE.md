@@ -1,227 +1,157 @@
-# CLAUDE.md
+# CLAUDE.md — Playwright Test Harness (this repository)
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-Full code examples and detailed explanations live in [docs/coding-rules.md](docs/coding-rules.md).
+This file is loaded into Claude Code's context whenever you work in **this**
+repository. It governs how to modify the harness itself.
 
-## Project Overview
+## What this repo is
 
-Playwright-based UI automation framework for a legal case management portal. Supports multi-role testing across Firm Admin, Supio Admin, and various law firm roles with visual regression testing and database validation.
+This repo is the **Playwright Test Harness** — a set of Claude Code agents,
+skills-style markdown specs, and helper scripts. When installed into a Playwright
+project, it lets a user generate or update a Playwright test from a single
+screenshot + one trigger phrase ("增加 SA-001 用例", "add test for TC-050", …).
 
-## Common Development Commands
+> **This repo is *not* a Playwright test project.** Do not generate test code
+> here. Do not run `npx playwright test` here. The harness is exercised by
+> copying it into a real target project and triggering the `add-test` agent
+> there.
 
-```bash
-# Run all tests
-npm test
-
-# Run specific project (auto-selects environment)
-npx playwright test --project=main      # staging
-npx playwright test --project=democase  # production
-npx playwright test --project=ca        # CA environment
-
-# Fast single-test development (no setup dependencies)
-npx playwright test [file.spec.ts] --config=playwright.test-only.config.ts --grep "[test-name]"
-
-# Override environment
-TEST_ENV=prod npx playwright test --project=main
-
-# Debug
-npm run debug:stg
-npm run debug:prod
-
-# Verify environment config
-npm run verify-env
-```
-
-| Project      | Default Env | CI           |
-|--------------|-------------|--------------|
-| `main`       | Staging     | Daily        |
-| `democase`   | Production  | Daily        |
-| `connectors` | Production  | Daily        |
-| `poc`        | Production  | Separate     |
-| `ca`         | CA          | Manual only  |
-
-See [docs/PROJECT_ENVIRONMENT_MAPPING.md](docs/PROJECT_ENVIRONMENT_MAPPING.md) for full details.
-
-## Architecture Overview
-
-- **BasePage** (`pages/base.ts`) — common UI interactions, GraphQL, screenshots, file upload
-- **`pages/firmadmin/`** — law firm administrator pages
-- **`pages/supioadmin/`** — platform administrator pages
-- **`fixtures.ts`** — fixture definitions; all fixtures share the same `page` instance
-- **`test-data/factories/case.factory.ts`** — case create/update flows
-- **`utils/`** — auth, database, constants, env-loader
-
-Tests are organised by role: `tests/firmadmin/`, `tests/supioadmin/`, `tests/workflow/`.
-
-## Key Development Patterns
-
-### Creating New Tests
-
-1. Use fixture injection: `async ({ casesPage, timelinePage }) => { ... }`
-2. Set login role: `test.use({ loginRole: RoleName.OPS2_ADMIN })`
-3. Follow naming: `feature_operation_test.spec.ts`
-4. Every CSV step must have test code; every expected result must have an assertion
-
-### TimelinePage.load() Already Lands on the Chrono Tab
-
-`timelinePage.load(caseId)` navigates to `?t=timeline` — the Chrono tab. Calling `gotoMenu(MENU.Chrono)` immediately after is redundant.
-
-```typescript
-// ❌ WRONG: redundant gotoMenu
-await timelinePage.load(caseId);
-await timelinePage.gotoMenu(MENU.Chrono);
-
-// ✅ CORRECT
-await timelinePage.load(caseId);
-```
-
-Only call `gotoMenu(MENU.Chrono)` when switching back to Chrono from another tab.
-
-### Case Create / Update: Factory First Rule
-
-**Before implementing any case create or update, always check `test-data/factories/case.factory.ts` first.**
-
-- `caseFactory.withName(...).withCaseType(...).create()` — full creation flow (navigates to `/cases` automatically)
-- `caseFactory.withExistingCase(name).withCaseType(...).update()` — full update flow (does **not** navigate; works from any case page)
-- Never reimplement create/update logic in a page object
-
-```typescript
-// ✅ CORRECT
-await casesPage.caseFactory.withExistingCase(caseName).withCaseType("MVA").update();
-
-// ❌ WRONG: reimplementing factory logic
-async updateCaseType(caseType: string) {
-  await this.page.getByRole("button", { name: "file-add Update case" }).click();
-  // ... duplicating factory logic
-}
-```
-
-`update()` does not call `casesPage.load()` — the "Update case" button exists on any case page (timeline, chrono, flowsheets). The caller controls the current page context.
-
-### CaseOptions: Add Only What Is Needed
-
-Default is no options. Add `checkDocumentProcessing: true` only when downstream steps require completed AI processing.
-
-```typescript
-// ✅ CORRECT: default
-await casesPage.caseFactory.withName("test").create();
-
-// ✅ CORRECT: AI pipeline needed
-await casesPage.caseFactory.withName("test").create({ checkDocumentProcessing: true });
-
-// ❌ WRONG: speculative flags
-await casesPage.caseFactory.withName("test").create({ checkFileStatus: false });
-```
-
----
-
-## 🚨 Critical Coding Rules
-
-### Element Interaction
-
-| Rule | Wrong | Right |
-|------|-------|-------|
-| Never use `isVisible()` to gate an interaction | `if (await btn.isVisible()) await btn.click()` | `await btn.click()` |
-| Never use element-level timeouts | `await expect(el).toBeVisible({ timeout: 3000 })` | `await expect(el).toBeVisible()` |
-| Never use `test.skip()` for missing elements | `if (!found) test.skip()` | Let the test fail with a clear error |
-
-`isVisible()` is acceptable only for legitimate conditional logic where the element may legitimately not exist (e.g. checking if a drawer is already open).
-
-### Selectors
-
-- **No `data-testid`**: anchor on visible text, traverse up with `..`, find sibling button
-- **Split-view top-right ellipsis**: always `.last()` — there is no wrapping testid
-- **Actions behind caret**: click the `"down"` button first, then click the `menuitem`
-- **Ant Design icons**: use `data-icon` attribute — `button:has([data-icon="info-circle"])`, not button name
-- **Banner buttons**: scope to container class (`.ant-flex-gap-small`), use `getByRole("button", { name })`
-- **Popover items** (e.g. Last Sync panel): use `button` role, not `menuitem`
-
-### Virtual Scroll Tables
-
-- Infer row type from `textContent()`, not child `isVisible()` (off-screen rows have no DOM children)
-- Re-query the locator after each DOM mutation (expansion, collapse)
-- Scroll the virtual holder into view before asserting off-screen rows
-- Only use `evaluate(el => el.scrollTop +=)` inside dialogs/modals — never on top-level SPA containers (triggers URL navigation)
-
-### Assertions
-
-- **Toasts auto-dismiss** (1–3 s) — assert on the persistent UI state that follows, not the toast
-- **`not.toBeVisible()` on multi-match locators** — always add `.first()` to avoid strict-mode violations
-- **Checkbox/toggle** — check current state with `isChecked()` before clicking to avoid inverting pre-selected state
-- **Files tab** — filenames display without extensions; match the bare name
-
-### Loading States
-
-- Wait for `.ant-spin-spinning` to detach before interacting with Ant Design components
-- Wait for the generic spinner, not just feature-specific loading text
-
-### Timeouts
-
-- `test.setTimeout` only for AI processing or known slow connector APIs (SmartAdvocate: 300 s)
-- Never increase timeout speculatively — reproduce with MCP first to confirm the cause
-
----
-
-## MCP-Driven Test Development
-
-**Always use MCP browser tools before writing selectors or interaction code.**
-
-### Required workflow
-
-1. `browser_navigate` → access the test page
-2. `browser_snapshot` → understand page structure
-3. `browser_click` / `browser_evaluate` → verify interactions work
-4. `browser_close` → **mandatory** before running Playwright tests
-5. Write test code only after MCP confirms all elements and interactions work
-
-### Post-action verification rule
-
-MCP validation must cover the **full action cycle**, not just element discovery. After performing an action (submitting a dialog, clicking a button), always observe the resulting page state:
-
-1. Execute the action in MCP
-2. Wait for completion signals (toast disappears, dialog closes)
-3. Observe whether the target area updates automatically
-
-Only add `page.reload()` if you observe the page does **not** auto-refresh. Never infer reload behaviour from code — the application's reactive update behaviour varies.
-
-### Session management
-
-`browser_close()` is mandatory after every MCP session. Leaving a session open causes "Browser is already in use" errors when running Playwright tests.
-
----
-
-## Debugging
-
-- **Pre-test structure**: use MCP (`browser_snapshot`, `browser_evaluate`)
-- **Runtime debugging**: add temporary `console.log`, grep the test output — do not open MCP while a Playwright test may run
-- **Stack traces**: always read the full trace — `grep -E "(Error:|at pages/|at tests/|at factories/)"` to find the exact failing layer
-- **Failing phase**: identify which layer (factory, page object, test) before making any fix
-
----
-
-## Environment Configuration
+## Layout
 
 ```
-.env.stg    # Staging (default)
-.env.prod   # Production
-.env.ca     # CA
+.claude/agents/        # The 6 agents — orchestrator + 5 pipeline stages
+  add-test.md          #   Orchestrator (entry point)
+  test-analyst.md      #   1. Requirement extraction
+  test-architect.md    #   2. Design + MCP selector validation
+  test-coder.md        #   3. Code generation
+  test-runner.md       #   4. Test execution + failure repair
+  test-summarizer.md   #   5. Knowledge extraction back into target project
+.claude/skills/        # Skill templates (business-flow code samples)
+  example-flow.md      #   Reference example — not a working skill
+.claude/settings.local.json  # Local permission allowlist
+docs/coding-rules.md   # Reference template for target projects (not loaded by the harness itself)
+scripts/               # Helper scripts the agents shell out to
+  cleanup-artifacts.sh #   Removes /tmp/tc_*.md after a run
+  test-quick.sh        #   Single-test runner used by test-runner
+  typecheck.sh         #   tsc --noEmit gate used by test-coder
+  lint-patterns.sh     #   Forbidden-pattern check used by test-coder
+README.md              # User-facing docs
+CLAUDE.md              # This file
 ```
 
-Control with `TEST_ENV`. Never hardcode URLs — use `ROLE_CONFIG` from `utils/constants.ts`.
-See [docs/ENVIRONMENT_CONFIGURATION.md](docs/ENVIRONMENT_CONFIGURATION.md).
+## Architecture in one paragraph
 
----
+The orchestrator (`add-test.md`) chains five sub-agents. Each stage **writes a
+markdown artifact to `/tmp/tc_{case_id}_{stage}.md`**. The next stage reads
+*only* that artifact, not the previous agent's chat output. This is how the
+pipeline keeps each agent's context small and lets long-running iteration loops
+(test-runner) work without drifting.
 
-## Troubleshooting
+```
+User screenshot + trigger phrase
+        ↓
+[1] test-analyst     → /tmp/tc_{id}_requirement.md
+[2] test-architect   → /tmp/tc_{id}_design.md       (reads requirement.md, validates selectors via MCP)
+[3] test-coder       → writes test + page-object code (reads requirement.md + design.md)
+[4] test-runner      → /tmp/tc_{id}_run_report.md   (loops on failure, may escalate up to step 1 or 2)
+[5] test-summarizer  → updates target project's CLAUDE.md / agent files / memory
+```
 
-| Symptom | Action |
-|---------|--------|
-| Auth failures | Check env vars; verify global-setup completed |
-| Screenshot mismatches | `--update-snapshots` |
-| Test timeout | Reproduce with MCP to find the stuck step |
-| Element not found | Validate selector in MCP first |
-| Strict mode violation | MCP `evaluate` to count elements; add `.first()` |
-| "Target page closed" | Check for SPA `scrollTop` on top-level containers; check for race between fixtures |
-| "Element intercepts pointer events" | Wait for `.ant-spin-spinning` to detach |
+## Where different kinds of knowledge live
 
-Reports: `./playwright-report/index.html` · `./allure-results/`
+The harness separates four kinds of knowledge. Keep them separate when editing.
+
+| Kind | Example | Where it lives |
+|---|---|---|
+| **A. Generic Playwright/MCP rules** | "Don't gate clicks on `isVisible()`"; MCP workflow | This repo's `docs/coding-rules.md` (a template the user copies into their project) |
+| **B. Project-specific coding style** | "Files tab assertions omit the extension"; "wait for `.ant-spin-spinning`" | The **target project's** `CLAUDE.md` and/or `docs/coding-rules.md` |
+| **C. Business-flow code templates** | "How to create a record + verify"; "how to upload + wait for AI processing" | The **target project's** `.claude/skills/*.md` (this repo only ships `example-flow.md` as a reference) |
+| **D. Real working examples** | A passing spec + its page-object methods | Already in the target project's `tests/` and `pages/` — the architect agent globs and reads them |
+
+This repo only ships **A** (template) and **C** (one example). It must never
+ship **B** (that's the user's project) and doesn't need to ship **D** (lives
+in user code).
+
+## Rules for modifying the harness
+
+### 1. Keep agents project-agnostic
+
+The harness is meant to drop into **any** Playwright project. Anything specific
+to one application belongs in the target project's `CLAUDE.md` or
+`docs/coding-rules.md`, not in an agent file here.
+
+**Forbidden in agent files:**
+- Hardcoded absolute paths (`/Users/<name>/Workspace/<project>/…`).
+- Specific business concepts from any one app (case names, connector vendors,
+  role names like `OPS2_ADMIN`).
+- Specific URLs, fixture names, or page-object names.
+
+**Allowed in agent files:**
+- Generic Playwright patterns (locator priority, wait strategies, virtual
+  scroll handling).
+- Ant Design / Material UI examples *as illustrations*, clearly marked.
+- Placeholder syntax: `RoleName.{ROLE}`, `{fixture1}`, `<project-fixtures-import>`.
+
+### 2. Respect the agent contract
+
+Each agent has a defined **input artifact**, **output artifact**, and **scope**.
+Don't move responsibility between them.
+
+| Agent           | Reads                          | Writes                   | Scope                                     |
+|-----------------|--------------------------------|--------------------------|-------------------------------------------|
+| test-analyst    | User input                     | `requirement.md`         | What the user wants. No selectors.        |
+| test-architect  | `requirement.md`               | `design.md`              | How to implement. MCP-validated selectors.|
+| test-coder      | `requirement.md` + `design.md` | Test + page-object files | Code only. No MCP. No invented selectors. |
+| test-runner     | `design.md` + code             | `run_report.md`          | Run, classify failures, fix or escalate.  |
+| test-summarizer | All artifacts                  | Target project knowledge | Extract reusable lessons.                 |
+
+If you add a rule about selectors to `test-coder.md`, it's in the wrong file —
+move it to `test-architect.md`. The coder doesn't decide selectors.
+
+### 3. Artifact protocol
+
+- File names: `/tmp/tc_{case_id}_{stage}.md`. Lowercase, underscores. CASE_ID
+  comes from user input; if absent, use `tc_draft`.
+- An agent **must** write its artifact before completing — don't return content
+  inline. The next stage reads from disk, not from chat history.
+- The orchestrator never relays artifact *content* between agents; it only
+  routes and gates.
+
+### 4. Don't generate test code in this repo
+
+If you find yourself opening `tests/` here, you're in the wrong directory. The
+harness is exercised by:
+
+1. Copying `.claude/agents/`, `scripts/`, and (optionally) `docs/coding-rules.md`
+   into a target Playwright project.
+2. Triggering the `add-test` agent there.
+
+If a change requires end-to-end validation, do it in a real target project,
+not here.
+
+### 5. When you change the pipeline
+
+- Update the table in `add-test.md` (orchestration steps + agent
+  responsibilities).
+- Update the architecture diagram in `README.md`.
+- Update the agent contract table in this file (CLAUDE.md).
+- Keep artifact filenames consistent: `tc_{case_id}_{stage}.md`.
+
+### 6. Don't treat `docs/coding-rules.md` as a strong constraint
+
+That file is a **reference template** for target projects to copy and adapt. It
+is not loaded by any agent in this repo. Editing it changes what target
+projects start from, but it doesn't affect the harness's behavior unless a
+target project actually pulls it in.
+
+## What "done" looks like for a harness change
+
+A harness change is done when:
+
+1. No agent file references absolute paths to a specific application repo.
+2. No agent file references specific business concepts (cases, connectors,
+   admin roles named after a real app).
+3. The agent contract table above still matches what each agent does.
+4. The orchestrator's pipeline table in `add-test.md` still matches reality.
+
+Manual end-to-end validation in a real target project is recommended before
+shipping a major change.

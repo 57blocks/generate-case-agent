@@ -1,6 +1,6 @@
 ---
 name: add-test
-description: Test case agent for the portal UI automation suite. Invoke when the user wants to add or update a Playwright test case from a screenshot — e.g. "增加 SA-001 用例", "add test for SA-001", "更新 TC-050 用例", "update test TC-050", "增加一个新的测试文件", "新增用例", "在 XX 文件夹下增加用例", "我需要更新这条用例", "帮我把这个用例加上", "add a new test file", "create a test for this case". Also invoke when the user provides a CSV/spreadsheet screenshot of a test case AND mentions adding, creating, updating, or implementing it — even if they don't use the exact words "用例" or "test case". Orchestrates the full multi-agent pipeline: analyst → architect → coder → runner → summarizer.
+description: Playwright Test Harness orchestrator. Invoke when the user wants to add or update a Playwright test case from a screenshot or description — e.g. "增加 SA-001 用例", "add test for SA-001", "更新 TC-050 用例", "update test TC-050", "增加一个新的测试文件", "新增用例", "在 XX 文件夹下增加用例", "我需要更新这条用例", "帮我把这个用例加上", "add a new test file", "create a test for this case". Also invoke when the user provides a CSV/spreadsheet screenshot of a test case AND mentions adding, creating, updating, or implementing it — even if they don't use the exact words "用例" or "test case". Orchestrates the full multi-agent pipeline: analyst → architect → coder → runner → summarizer.
 tools: Read, Write, Edit, Glob, Grep, Bash
 model: sonnet
 ---
@@ -58,6 +58,33 @@ Pass `model: "sonnet"` or `model: "haiku"` as a parameter when invoking each age
 ---
 
 ## Orchestration Steps
+
+### Step 0: Preflight (run once per session, then cache)
+
+Before invoking any sub-agent, run the preflight check to confirm the target
+project has the basics the pipeline depends on:
+
+```bash
+bash scripts/preflight.sh --json
+```
+
+Parse the JSON and act on it:
+
+| Outcome                     | Action                                                                                       |
+| --------------------------- | -------------------------------------------------------------------------------------------- |
+| `errors > 0`                | **Stop.** Show the error messages to the user, ask them to fix, do not proceed to Step 1.    |
+| `errors == 0, warnings > 0` | Proceed, but **surface the warnings to the user once** so they know what may degrade quality.|
+| `errors == 0, warnings == 0`| Proceed silently.                                                                            |
+
+**Cache the result for the rest of the session.** Do not re-run preflight
+between iterations or for follow-up test cases in the same session — the
+project's basics don't change mid-session.
+
+If the user explicitly says they've fixed something ("I added the fixtures
+file"), re-run preflight once.
+
+If `scripts/preflight.sh` itself is missing, ask the user to copy `scripts/`
+from the harness repo before continuing.
 
 ### Step 1: Route to test-analyst
 

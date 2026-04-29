@@ -32,11 +32,11 @@ Extract the following fields:
 | **Case ID** | e.g. TC-050, SA-001 |
 | **Case Name** | Use as the `test()` description |
 | **Module / Sub Module** | For file path organization |
-| **Roles** | User roles involved (map to `RoleName.*`) |
+| **Roles** | User roles involved (map to the project's role enum, commonly `RoleName.*`) |
 | **Precondition** | Environment setup, seed data, feature flags, prior state |
 | **Steps** | ALL numbered action steps — do not skip or summarize |
 | **Expected Results** | ALL numbered verification points — must map 1:1 to steps |
-| **Test Data** | File names, field values, IDs, connector types |
+| **Test Data** | File names, field values, IDs, external integration parameters |
 
 **Parse every step and every expected result. Missing a step is a defect.**
 
@@ -166,7 +166,7 @@ When producing an Updated Requirement Spec, **overwrite** `/tmp/tc_{case_id}_req
 The following belong to the architect, not the analyst. Including them in the Requirement Spec causes downstream agents to act on unvalidated assumptions, leading to wasted iteration loops.
 
 **Never write in the Requirement Spec:**
-- TypeScript method names (e.g. `navigateToChronoTab()`, `verifyFlowsheetEventsShowTime()`)
+- TypeScript method names (e.g. `navigateToTabX()`, `verifyEventsShowTime()`)
 - Class names or page object file paths
 - CSS selectors, locator strategies, or DOM structure assumptions
 - Suggestions for which page object to modify or create
@@ -177,10 +177,10 @@ The following belong to the architect, not the analyst. Including them in the Re
 
 ```
 ❌ WRONG (analyst overreach):
-"Add method verifyFlowsheetEventsShowTime() to FlowsheetsPage.
+"Add method verifyEventsShowTime() to EventsPage.
 Use locator('[class*="timelineList"]').textContent() to check for HH:MM pattern."
 
 ✅ CORRECT (analyst scope):
-"Unit 3: Chrono tab displays time on flowsheet event cards → at least one event card
+"Unit 3: Events tab displays time on event cards → at least one event card
 shows a time value in HH:MM format."
 ```

@@ -1,7 +1,26 @@
-# Coding Rules — Detailed Reference
+# Coding Rules — Reference Template
 
-Full examples behind the rules summarised in [CLAUDE.md](../CLAUDE.md).
-Read this when you need a concrete code pattern or want to understand *why* a rule exists.
+> **This file is a reference template shipped with Playwright Test Harness.**
+>
+> It collects Playwright authoring patterns the harness's `test-architect` and
+> `test-coder` agents will respect when generating tests. **Copy this file into
+> your target project's `docs/coding-rules.md`** and adapt it to your project.
+>
+> - **Generic rules** (no element-interaction gating, no element-level timeouts,
+>   virtual scroll handling, MCP workflow) apply to any Playwright project.
+> - **Ant Design–specific rules** (`.ant-spin-spinning`, `.ant-modal`,
+>   `.ant-table-tbody-virtual-holder`) are kept as concrete examples — replace
+>   the selectors with your UI library's equivalents (Material UI, Chakra, etc.)
+>   or delete the section if it doesn't apply.
+> - **Project-specific rules** (filename without extension, "Files tab",
+>   connector flows) are illustrative — delete or replace with your own.
+>
+> The architect agent reads this file from the **target project's**
+> `docs/coding-rules.md` (preferred) or `.claude/coding-rules.md` (fallback).
+> If neither exists, it falls back to the project's `CLAUDE.md`.
+
+Full examples behind the high-level rules. Read this when you need a concrete
+code pattern or want to understand *why* a rule exists.
 
 ---
 

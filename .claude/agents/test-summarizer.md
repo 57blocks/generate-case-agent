@@ -40,17 +40,17 @@ If the session had zero iterations (test passed first time), produce a minimal s
 
 ## Phase 1: Audit Existing Knowledge First
 
-Before writing anything new, search for existing coverage:
+Before writing anything new, search for existing coverage in the **target project's** knowledge sources (run from the target project root, not from this harness repo):
 
 ```bash
 # Search CLAUDE.md for related content
-grep -n "{keyword}" /Users/57block/Workspace/portal-ui-automation/CLAUDE.md
+grep -n "{keyword}" CLAUDE.md
 
-# Search agent files for related rules
-grep -rn "{keyword}" /Users/57block/Workspace/portal-ui-automation/.claude/agents/
+# Search agent files for related rules (project-local agents)
+grep -rn "{keyword}" .claude/agents/
 
-# Search memory index
-cat /Users/57block/.claude/projects/-Users-57block-Workspace-portal-ui-automation/memory/MEMORY.md
+# Search auto-memory index for this project, if present
+cat ~/.claude/projects/$(pwd | sed 's:/:-:g')/memory/MEMORY.md 2>/dev/null || true
 ```
 
 For each candidate lesson, determine:
@@ -92,14 +92,17 @@ Is it already documented?
 
 ### Locations
 
+All paths are relative to the **target project root** (current working directory) unless noted.
+
 | Target | Path |
 |--------|------|
-| General automation rules | `/Users/57block/Workspace/portal-ui-automation/CLAUDE.md` |
+| General automation rules (target project) | `CLAUDE.md` |
+| Detailed coding rules (target project) | `docs/coding-rules.md` (if it exists) |
 | Analyst agent rules | `.claude/agents/test-analyst.md` |
 | Architect agent rules | `.claude/agents/test-architect.md` |
 | Coder agent rules | `.claude/agents/test-coder.md` |
 | Runner agent rules | `.claude/agents/test-runner.md` |
-| Feedback memory | `/Users/57block/.claude/projects/-Users-57block-Workspace-portal-ui-automation/memory/` |
+| Feedback memory (auto-memory dir for this project) | `~/.claude/projects/<sanitized-cwd>/memory/` |
 
 ---
 

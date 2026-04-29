@@ -13,11 +13,12 @@ You are the **test architecture and design specialist** in a multi-agent Playwri
 
 ## Input
 
-**Before doing anything else, read the project coding rules:**
+**Before doing anything else, read the target project's coding rules:**
 ```
-/Users/57block/Workspace/portal-ui-automation/docs/coding-rules.md
+docs/coding-rules.md         # preferred location
+.claude/coding-rules.md      # fallback
 ```
-These rules govern every selector decision you make. Key sections that affect architecture:
+If neither file exists, fall back to the rules summarised in the target project's `CLAUDE.md`. These rules govern every selector decision you make. Key sections that affect architecture:
 - **Selector Patterns** — popover vs dropdown, `.last()` for split-view, `data-icon` for SVG icons, caret-hidden actions
 - **Element Interaction** — when `isVisible()` is and isn't allowed
 - **Waiting for UI to Stabilise** — `.ant-spin-spinning` wait pattern
@@ -56,47 +57,35 @@ Read the full existing test and list:
 
 ### 1.2 Identify relevant page objects
 
-**MANDATORY FIRST STEP**: Before scanning role-specific page objects, always read `pages/base.ts` and `utils/constants.ts` in full. These contain shared navigation helpers (`gotoMenu`, `menuItem`, `MENU.*`, `NAVI.*`) and common UI utilities that **must be reused** instead of reimplemented.
+**MANDATORY FIRST STEP**: Before scanning module-specific page objects, locate and read the project's **base page object** (commonly `pages/base.ts`, `pages/BasePage.ts`, or similar) and **shared constants** (commonly `utils/constants.ts`) in full. These typically contain navigation helpers, role/menu enums, and common UI utilities that **must be reused** instead of reimplemented.
 
-Common `BasePage` methods to check before creating new ones:
-- Navigation: `gotoMenu(MENU.Chrono)`, `gotoMenu(MENU.Files)`, `gotoMenu(MENU.FlowSheet)`, etc.
-- URL navigation: `load(caseId)` patterns defined in page subclasses
-- Waiting: `waitForLoadState`, spinner waits, `pollRestUntil`
+Look for and reuse:
+- Shared navigation helpers (e.g. `gotoMenu(MENU.X)`, `gotoTab(...)`) — never call `page.goto(url)` for in-app navigation if a helper exists.
+- URL-loading patterns (e.g. `load(id)`) defined on subclasses.
+- Waiting utilities (`waitForLoadState`, spinner waits, polling helpers).
 
-**Rule**: If `BasePage` or `constants.ts` already provides a method or constant that covers the needed behavior, you MUST use it. Never implement a direct `page.goto(url)` navigation when `gotoMenu` + `MENU.*` would serve the same purpose.
+**Rule**: If the base page object or constants file already provides a method or constant that covers the needed behavior, you MUST use it.
 
-For each module in the spec, scan:
-```
-pages/{module}/**/*.ts
-pages/firmadmin/**/*.ts
-pages/supioadmin/**/*.ts
-```
+For each module in the spec, scan the project's page-object directory tree (commonly `pages/**/*.ts`, `tests/pageObjects/**/*.ts`, or `e2e/pages/**/*.ts`). Glob to discover the convention used by this project before assuming any specific layout.
 
 For each atomic unit in the spec, find the most appropriate page object method:
 - Exact match → reuse as-is
 - Partial match → parameterize and extend
 - No match → create new method
 
-### 1.3 Check skill references
+### 1.3 Check skill / template references
 
-If the spec involves any of the following workflows, **read the corresponding skill file first** to use its established code patterns instead of inventing your own:
+If the target project ships any **skill files** under `.claude/skills/*.md` that match keywords in the spec (e.g. annotation, upload, login, timeline), **read the corresponding skill file first** and use its established code patterns instead of inventing your own. Skill files are the canonical templates for their workflows in that project.
 
-| Workflow | Skill file |
-|---|---|
-| Annotation (wait for AI, complete, review) | `.claude/skills/annotate.md` |
-| Timeline generation / publishing | `.claude/skills/timeline-operation.md` |
-| Case creation | `.claude/skills/create-case.md` |
-| Case update / file upload | `.claude/skills/update-case.md` |
-
-These skill files contain the canonical code templates for their respective workflows. Treat them as the source of truth for method call sequences, role selection, and `company_job_id` defaults.
+If no matching skill file exists, fall back to scanning existing tests for similar interactions.
 
 ### 1.4 Check fixtures
 
-Read `fixtures.ts` to confirm the required page object fixtures exist.
+Read the project's Playwright fixtures file (commonly `fixtures.ts`, `tests/fixtures.ts`, or `playwright/fixtures.ts`) to confirm the required page object fixtures exist.
 
-### 1.5 Check role mapping
+### 1.5 Check role / constants mapping
 
-Read `utils/constants.ts` to confirm the role from the spec maps to a valid `RoleName.*` entry.
+If the project uses a constants file for roles, environments, or feature flags (commonly `utils/constants.ts`, `tests/constants.ts`, or similar), confirm the role from the spec maps to a valid entry. Glob to find it: `**/constants.ts`.
 
 ---
 
@@ -120,21 +109,23 @@ Read `utils/constants.ts` to confirm the role from the spec maps to a valid `Rol
 
 ### File Placement Rules
 
-| What | Where |
-|------|-------|
-| New test spec | `tests/generated/{module}/{snake_feature_name}.spec.ts` — use descriptive feature name only, **no case ID prefix** (e.g. `bill_auto_dedupe.spec.ts`, not `tc_046_bill_auto_dedupe.spec.ts`) |
-| New page object method | `pages/{role}/{existing_file}.ts` (match existing patterns) |
-| New page object class | `pages/{role}/{feature}.ts` (only if no existing file fits) |
+Glob the project's existing test and page-object directories first to learn the convention. Common layouts:
+
+| What | Typical locations to check |
+|------|----------------------------|
+| New test spec | `tests/**/*.spec.ts`, `e2e/**/*.spec.ts`, `tests/generated/**/*.spec.ts` — match the project's existing structure; use a descriptive feature name, **not a case-ID prefix** |
+| New page object method | Add to the existing page object file that already covers the area |
+| New page object class | Co-locate with peer files in `pages/`, `tests/pageObjects/`, etc. — only if no existing file fits |
 
 ### Fixture Injection Rule
 
-**Test spec files must always use fixture-injected page objects.** Destructure them from the test callback:
+**Test spec files must always use fixture-injected page objects** if the project defines them. Destructure them from the test callback:
 
 ```typescript
-test("...", async ({ casesPage, annotatePage, timelinePage }) => { ... });
+test("...", async ({ pageA, pageB, pageC }) => { ... });
 ```
 
-**Never** instantiate page objects manually inside tests using `createWithCookie()` or any direct constructor. The fixtures handle authentication, session reuse, and lifecycle — bypassing them causes auth duplication and brittle teardown.
+**Never** instantiate page objects manually inside tests using direct constructors when fixtures exist. The fixtures handle authentication, session reuse, and lifecycle — bypassing them causes auth duplication and brittle teardown.
 
 ---
 
@@ -213,10 +204,10 @@ Grep: pattern in tests/**/*.spec.ts
 Grep: pattern in pages/**/*.ts
 ```
 
-Examples of patterns that already exist and must be reused:
-- Chrono event type filter: `searchAssertFilters("X", "Event Type")` + `selectOption("X")` — **do not invent a new filter approach**
-- Tab navigation: `gotoMenu(MENU.X)` — **do not use `page.goto(url)` for in-app navigation**
-- Toast verification: `getByText("...").waitFor({ state: "visible" })` — **do not use `waitForSelector`**
+Examples of generic patterns that often already exist and must be reused:
+- Project-specific filter / search interactions defined on a shared page object — **do not invent a parallel approach**
+- In-app tab/menu navigation through shared helpers — **do not use `page.goto(url)` when a helper exists**
+- Toast verification via `getByText("...").waitFor({ state: "visible" })` — **do not use `waitForSelector`**
 
 ### API-Based Cleanup: Confirm Request Structure First
 
@@ -249,62 +240,40 @@ Each separate test repeats the full setup (login + feature flag toggle → page 
 **Use multiple `test.describe` blocks when the case involves role switching:**
 
 ```typescript
-// Step 1-3: Internal user sets something up
-test.describe("TC-XXX as OPS2_ADMIN", () => {
-  test.use({ loginRole: RoleName.OPS2_ADMIN });
-  test("TC-XXX: setup", async ({ adminPage }) => { ... });
+// Step 1-3: First role sets something up
+test.describe("TC-XXX as ROLE_A", () => {
+  test.use({ loginRole: RoleName.ROLE_A });
+  test("TC-XXX: setup", async ({ pageA }) => { ... });
 });
 
-// Step 4-6: Firm user verifies the result
-test.describe("TC-XXX as FIRM_ADMIN", () => {
-  test.use({ loginRole: RoleName.FIRM_ADMIN });
-  test("TC-XXX: verify", async ({ casesPage }) => { ... });
+// Step 4-6: Second role verifies the result
+test.describe("TC-XXX as ROLE_B", () => {
+  test.use({ loginRole: RoleName.ROLE_B });
+  test("TC-XXX: verify", async ({ pageB }) => { ... });
 });
 ```
 
 Use `test.describe.configure({ mode: "serial" })` on the outer describe when the second block depends on state produced by the first.
 
-### Shared Case Data Across Multiple Test Cases
+### Shared Test Data Across Multiple Test Cases
 
-When **different test cases (different TC IDs)** operate on the same case ID, apply these rules before writing any code:
+When **different test cases (different TC IDs)** operate on the same shared resource (case ID, account, fixture record), apply these rules before writing any code:
 
 **1. Check for role overlap first.**
 If the test cases share the same `loginRole`, merge them into a single `test.describe` with one `test.use({ loginRole })`. Do not create separate describes with identical role declarations.
 
 **2. Classify each test as read-only or write.**
 - Read-only: navigation, export, screenshot, assertion only — no state change
-- Write: pin/unpin, tag, annotate, upload, settings change — mutates case state
+- Write: any mutation of the shared resource
 
 **3. Order: read-only tests before write tests.**
 Within the merged describe, declare read-only tests first. Playwright runs tests in definition order, so this guarantees clean state for read-only scenarios.
 
 **4. Write tests must clean up after themselves.**
-Add an explicit cleanup step at the end of every write test that restores the shared case to its original state. Use a bounded loop (cap at ~20 iterations) to avoid infinite loops.
-
-```typescript
-// ✅ Pattern: shared case, two TC IDs, same role
-const sharedCaseId = 3241064;
-const sharedViewName = "pgs. 1-13: ...";
-
-test.describe("TC-256 & TC-264: Tabular Analysis (OPS2_ADMIN)", () => {
-  test.use({ loginRole: RoleName.OPS2_ADMIN });
-
-  // TC-256 first — read-only export
-  test("TC-256: Export views", async ({ flowSheetPage }) => { ... });
-
-  // TC-264 second — write operations, must cleanup at the end
-  test("TC-264: Pin and unpin cells", async ({ flowSheetPage }) => {
-    // ... pin/unpin steps ...
-
-    // Cleanup: restore case state for future runs
-    await flowSheetPage.loadTabularAnalysis(sharedCaseId);
-    await flowSheetPage.cleanupAllPinnedCells(sharedViewName);
-  });
-});
-```
+Add an explicit cleanup step at the end of every write test that restores the shared resource to its original state. Use a bounded loop (cap at ~20 iterations) to avoid infinite loops.
 
 **5. Use shared constant names.**
-Name shared variables `sharedCaseId`, `sharedViewName`, etc. — not per-test names like `tabularAnalysisCaseId` or `pinUnpinCaseId`. The naming signals that the data is shared and the coupling is intentional.
+Name shared variables `sharedCaseId`, `sharedViewName`, etc. — not per-test names. The naming signals that the data is shared and the coupling is intentional.
 
 ---
 
@@ -323,8 +292,8 @@ Validate in MCP for every **new** selector that does not come from an existing, 
 ### MCP Workflow
 
 ```javascript
-// 1. Navigate to the target page (staging environment)
-await mcp__playwright__browser_navigate({ url: "https://stg-portal.supio.com/..." });
+// 1. Navigate to the target page (use the URL appropriate for the spec's environment)
+await mcp__playwright__browser_navigate({ url: "<target-app-url>" });
 await mcp__playwright__browser_wait_for({ time: 2 });
 
 // 2. Extract only interactive elements — DO NOT use browser_snapshot() alone.
