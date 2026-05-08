@@ -12,8 +12,8 @@ run the full pipeline automatically:
 
 **requirement breakdown → architecture design → MCP validation → code generation → automated debugging → knowledge capture**
 
-The end result is a passing test committed in your repository context, plus reusable lessons
-captured for future test generation.
+The end result is a passing test in your repository context, plus reusable lessons captured for
+future test generation.
 
 ---
 
@@ -119,14 +119,14 @@ not the previous stage's chat output. This keeps each agent's context clean and 
 The orchestrator (`add-test` agent) recognizes multiple natural trigger phrases in both Chinese
 and English:
 
-| Phrase                            | Action |
-|-----------------------------------|--------|
-| 增加 SA-001 用例                  | Add a new test, ID = SA-001 |
-| add test for TC-050               | Add a new test, ID = TC-050 |
-| 更新 TC-050 用例                  | Update an existing test |
-| update test TC-050                | Update an existing test |
-| 在 supioadmin 文件夹下增加用例    | Add a new test under a target directory |
-| add a new test file               | Add a new test (no specific case ID yet) |
+| Phrase | Action |
+|--------|--------|
+| 增加 SA-001 用例 | Add a new test, ID = SA-001 |
+| add test for TC-050 | Add a new test, ID = TC-050 |
+| 更新 TC-050 用例 | Update an existing test |
+| update test TC-050 | Update an existing test |
+| 在 supioadmin 文件夹下增加用例 | Add a new test under a target directory |
+| add a new test file | Add a new test (no specific case ID yet) |
 
 Drop a test-case screenshot into the conversation (CSV / spreadsheet / document formats are all
 fine as long as the content is readable), plus one trigger phrase. The orchestrator will run the
@@ -343,6 +343,6 @@ scripts/typecheck.sh      Used by coder: `tsc --noEmit` gate
 scripts/lint-patterns.sh  Used by coder: forbidden-pattern scan
 scripts/cleanup-artifacts.sh Cleans up /tmp/tc_*.md after a session
 CLAUDE.md                 Instructions for Claude when modifying the *harness itself*
-README.md                 This file
+README.md                 English README
 README.zh-CN.md           Simplified Chinese translation
 ```
