@@ -101,13 +101,13 @@ not the previous stage's chat output. This keeps each agent's context clean and 
 [5] test-summarizer  →  updates lessons back into your repo's CLAUDE.md / agent / memory
 ```
 
-| Agent             | Responsibility | Model |
-|-------------------|----------------|-------|
-| `add-test`        | Orchestrator — routes between stages and guards artifacts | sonnet |
-| `test-analyst`    | Reads screenshots, clarifies requirements when needed, and breaks test cases into atomic units | sonnet |
-| `test-architect`  | Chooses Page Objects and validates new selectors with MCP | sonnet |
-| `test-coder`      | Writes code only; does not open browsers or invent selectors | haiku |
-| `test-runner`     | Runs tests, classifies failures from stack traces, repairs what it can, or escalates | haiku |
+| Agent | Responsibility | Model |
+|---|---|---|
+| `add-test` | Orchestrator — routes between stages and guards artifacts | sonnet |
+| `test-analyst` | Reads screenshots, clarifies requirements when needed, and breaks test cases into atomic units | sonnet |
+| `test-architect` | Chooses Page Objects and validates new selectors with MCP | sonnet |
+| `test-coder` | Writes code only; does not open browsers or invent selectors | haiku |
+| `test-runner` | Runs tests, classifies failures from stack traces, repairs what it can, or escalates | haiku |
 | `test-summarizer` | Audits successful runs and updates the project knowledge base | sonnet |
 
 ---
@@ -120,7 +120,7 @@ The orchestrator (`add-test` agent) recognizes multiple natural trigger phrases 
 and English:
 
 | Phrase | Action |
-|--------|--------|
+|---|---|
 | 增加 SA-001 用例 | Add a new test, ID = SA-001 |
 | add test for TC-050 | Add a new test, ID = TC-050 |
 | 更新 TC-050 用例 | Update an existing test |
@@ -195,7 +195,7 @@ what `preflight` checks. The table below explains where each placeholder or conf
 comes from, so you can fill in missing pieces systematically:
 
 | Placeholder / Config | How the agent fills it | What your project should provide | What happens if missing |
-|-----------------------------------------|----------------------------------------------------|--------------------------------------------------|-------------------------|
+|---|---|---|---|
 | `<project-fixtures-import>` | Reads import paths from your existing specs | At least one runnable `*.spec.ts` | coder won't know how to import |
 | `<project-constants-import>` | Same as above | Same as above | Same as above |
 | `RoleName.{ROLE}` | Reads enums from `utils/constants.ts` (or similar) | A role-enum file in the project | analyst will keep asking what role to use |
@@ -272,7 +272,7 @@ capabilities: sub-agent orchestration, MCP Playwright tools, and routing between
 the `Agent` tool.
 
 | IDE | Status | Notes |
-|-----|--------|-------|
+|---|---|---|
 | Claude Code | ✅ Native support | Full pipeline, automatic failure iteration, MCP selector validation |
 | Cursor | ⚠️ Adaptable | Rewrite each `.md` agent as `.cursor/rules/*.mdc`; trigger stages manually; lose automatic orchestration |
 | GitHub Copilot | ❌ Not practical | No sub-agents, no MCP, much lower accuracy |
@@ -333,16 +333,16 @@ Copilot Agent and accept a clear drop in accuracy.
 
 ## Repository files
 
-```
-.claude/agents/           6 agents (orchestrator + 5 pipeline stages)
-.claude/skills/           Skill templates (business-flow code examples)
-docs/coding-rules.md      Reference coding-rules template (for target projects to copy and adapt)
-scripts/preflight.sh      Run once after installation to check project readiness for the harness
-scripts/test-quick.sh     Used by runner: runs a single test without global setup
-scripts/typecheck.sh      Used by coder: `tsc --noEmit` gate
-scripts/lint-patterns.sh  Used by coder: forbidden-pattern scan
+```text
+.claude/agents/              6 agents (orchestrator + 5 pipeline stages)
+.claude/skills/              Skill templates (business-flow code examples)
+docs/coding-rules.md         Reference coding-rules template (for target projects to copy and adapt)
+scripts/preflight.sh         Run once after installation to check project readiness for the harness
+scripts/test-quick.sh        Used by runner: runs a single test without global setup
+scripts/typecheck.sh         Used by coder: `tsc --noEmit` gate
+scripts/lint-patterns.sh     Used by coder: forbidden-pattern scan
 scripts/cleanup-artifacts.sh Cleans up /tmp/tc_*.md after a session
-CLAUDE.md                 Instructions for Claude when modifying the *harness itself*
-README.md                 English README
-README.zh-CN.md           Simplified Chinese translation
+CLAUDE.md                    Instructions for Claude when modifying the *harness itself*
+README.md                    English README
+README.zh-CN.md              Simplified Chinese translation
 ```
