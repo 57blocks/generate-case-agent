@@ -372,52 +372,6 @@ layout: section
 
 ---
 
-## 先跑一下 preflight
-
-<div class="grid grid-cols-2 gap-8 items-start mt-2">
-<div class="text-sm">
-
-**三步接入：**
-
-```bash
-git clone https://github.com/57blocks/generate-case-agent /tmp/harness
-cp -r /tmp/harness/.claude/agents .claude/
-cp -r /tmp/harness/.claude/skills .claude/
-cp -r /tmp/harness/scripts .
-chmod +x scripts/*.sh
-
-bash scripts/preflight.sh
-```
-
-</div>
-<div class="text-sm">
-
-**preflight 在检查什么：**
-
-<div class="flex flex-col gap-2 mt-1">
-  <div class="flex gap-2 items-start border border-red-200 bg-red-50 rounded p-2 text-xs">
-    <span class="font-bold text-red-500 shrink-0">❌ 必须</span>
-    <span><code>playwright.config.ts</code> 存在 + <code>scripts/*.sh</code> 可执行</span>
-  </div>
-  <div class="flex gap-2 items-start border border-yellow-200 bg-yellow-50 rounded p-2 text-xs">
-    <span class="font-bold text-yellow-600 shrink-0">⚠️ 推荐</span>
-    <span><code>playwright.test-only.config.ts</code>（慢 10 倍）、fixtures 文件（风格不一致）</span>
-  </div>
-  <div class="flex gap-2 items-start border border-yellow-200 bg-yellow-50 rounded p-2 text-xs">
-    <span class="font-bold text-yellow-600 shrink-0">⚠️ 推荐</span>
-    <span><code>CLAUDE.md</code> + <code>.claude/context/coding-rules.md</code>（没有就靠猜）</span>
-  </div>
-  <div class="flex gap-2 items-start border border-yellow-200 bg-yellow-50 rounded p-2 text-xs">
-    <span class="font-bold text-yellow-600 shrink-0">⚠️ 推荐</span>
-    <span>MCP Playwright server（没有 architect 就无法验 selector）</span>
-  </div>
-</div>
-
-</div>
-</div>
-
----
-
 ## 假设你用例长这样
 
 <img src="./assets/test case.png" class="rounded shadow mx-auto mt-8" style="max-height: 400px;" />
