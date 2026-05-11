@@ -67,7 +67,7 @@ issues iteratively, up to 5 times.
                                                             │
                                                             ▼
                                                 one passing test in your repo
-                                                + lessons written back into CLAUDE.md
+                                                + lessons written back into the project knowledge base
 ```
 
 ---
@@ -98,7 +98,7 @@ not the previous stage's chat output. This keeps each agent's context clean and 
 [2] test-architect   →  /tmp/tc_{id}_design.md         (validates selectors with MCP Playwright)
 [3] test-coder       →  writes spec + Page Object files
 [4] test-runner      →  /tmp/tc_{id}_run_report.md     (iterates on failure; may return to step 1 / 2)
-[5] test-summarizer  →  updates lessons back into your repo's CLAUDE.md / agent / memory
+[5] test-summarizer  →  writes lessons back into the project knowledge base (CLAUDE.md, agent files, or .claude/context/project-facts.md depending on type)
 ```
 
 | Agent | Responsibility | Model |

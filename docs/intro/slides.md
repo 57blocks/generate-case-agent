@@ -166,7 +166,7 @@ layout: section
   <div class="text-center text-gray-300">↓</div>
   <div class="bg-gray-50 border border-gray-200 rounded px-3 py-1.5"><span class="font-mono text-xs font-bold">runner</span> &nbsp; 跑测试，按 stack trace 分类失败，自动修</div>
   <div class="text-center text-gray-300">↓</div>
-  <div class="bg-gray-50 border border-gray-200 rounded px-3 py-1.5"><span class="font-mono text-xs font-bold">summarizer</span> &nbsp; 把这次踩的坑写回项目 CLAUDE.md</div>
+  <div class="bg-gray-50 border border-gray-200 rounded px-3 py-1.5"><span class="font-mono text-xs font-bold">summarizer</span> &nbsp; 把这次踩的坑按类型写回项目知识库</div>
 </div>
 
 </div>
@@ -189,7 +189,7 @@ flowchart LR
     C --> D[coder]
     D --> E[runner]
     E -->|✅ 通过| F[summarizer]
-    F --> G["✨ 测试通过\n经验写回 CLAUDE.md"]
+    F --> G["✨ 测试通过\n经验写回知识库"]
     E -->|"🟡 selector / 设计错误"| C
     C -->|"🔴 需求理解失败"| B
 ```

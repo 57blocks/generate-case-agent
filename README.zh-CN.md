@@ -63,7 +63,7 @@ bash scripts/preflight.sh
                                                            │
                                                            ▼
                                                你仓库中的一条通过测试
-                                               + 写回 CLAUDE.md 的经验沉淀
+                                               + 经验按类型写回项目知识库
 ```
 
 ---
@@ -76,7 +76,7 @@ bash scripts/preflight.sh
 
 - 用一张截图生成一条可运行的测试。
 - 让 agent **自行迭代调试失败**，例如 selector 漂移、spinner 等待、虚拟滚动等常见问题。
-- 将本次运行积累下来的经验自动写回你项目的 `CLAUDE.md`，为后续测试生成提供参考。
+- 将本次运行积累下来的经验按类型写回项目知识库（CLAUDE.md、agent 文件或 .claude/context/project-facts.md），为后续测试生成提供参考。
 
 ---
 
@@ -91,7 +91,7 @@ bash scripts/preflight.sh
 [2] test-architect   →  /tmp/tc_{id}_design.md         （使用 MCP Playwright 验证 selector）
 [3] test-coder       →  编写 spec + Page Object 文件
 [4] test-runner      →  /tmp/tc_{id}_run_report.md     （失败时迭代；必要时回退到第 1 / 2 阶段）
-[5] test-summarizer  →  将经验更新回你仓库的 CLAUDE.md / agent / memory
+[5] test-summarizer  →  将经验按类型写回项目知识库（CLAUDE.md、agent 文件、project-facts.md）
 ```
 
 | Agent | 职责 | 模型 |
@@ -129,7 +129,7 @@ analyst 会主动发起澄清。
 - **澄清问题**：由 analyst 在必要时提出
 - **破坏性变更警告**：当 architect 发现新方案与现有代码冲突时提示
 - **迭代更新信息**：由 runner 输出，例如 `Iteration 2: fix selector issue…`
-- **会话总结**：说明实现了什么、复用了什么，以及向 `CLAUDE.md` 回写了哪些经验
+- **会话总结**：说明实现了什么、复用了什么，以及向项目知识库回写了哪些经验
 
 ### 自动迭代
 
