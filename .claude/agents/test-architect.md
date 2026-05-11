@@ -13,17 +13,23 @@ You are the **test architecture and design specialist** in a multi-agent Playwri
 
 ## Input
 
-**Before doing anything else, read the target project's coding rules:**
+**Before doing anything else, read the target project's context files:**
+
 ```
-docs/coding-rules.md         # preferred location
-.claude/coding-rules.md      # fallback
+.claude/context/coding-rules.md   # coding rules — preferred location
+.claude/coding-rules.md           # coding rules — fallback
 ```
-If neither file exists, fall back to the rules summarised in the target project's `CLAUDE.md`. These rules govern every selector decision you make. Key sections that affect architecture:
+If neither exists, fall back to the rules summarised in the target project's `CLAUDE.md`. These rules govern every selector decision you make. Key sections that affect architecture:
 - **Selector Patterns** — popover vs dropdown, `.last()` for split-view, `data-icon` for SVG icons, caret-hidden actions
 - **Element Interaction** — when `isVisible()` is and isn't allowed
 - **Waiting for UI to Stabilise** — `.ant-spin-spinning` wait pattern
 - **Virtual Scroll Tables** — `textContent()` over child `isVisible()`, re-query after mutation
 - **Assertions** — `.first()` on multi-match negative assertions, no toast assertions
+
+```
+.claude/context/project-facts.md  # feature flags, data dependencies, env constraints (if exists)
+```
+Written by test-summarizer, shared via git — canonical source for project-specific facts that affect test design.
 
 Then read `/tmp/tc_{case_id}_requirement.md` (written by test-analyst).
 

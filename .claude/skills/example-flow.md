@@ -1,26 +1,34 @@
 # Example Flow Skill — Reference Template
 
 > **This file is a template, not a working skill.** It exists to show you what a
-> business-flow skill looks like in this harness. Copy it into your target
-> project's `.claude/skills/` directory, rename it, and adapt the code to your
-> domain. The harness's `test-architect` agent will read matching skill files
-> in the target project before designing a test, and use them as the canonical
-> templates for that workflow.
+> skill looks like in this harness. Copy it into your target project's
+> `.claude/skills/` directory, rename it, and adapt the code to your domain.
+> The harness's `test-architect` agent will read matching skill files in the
+> target project before designing a test, and use them as the canonical
+> templates for that operation.
 >
 > **What belongs in a skill:**
 >
-> 1. A real, runnable code template for a multi-step business flow that
->    multiple test cases reuse (login + create + verify; upload + process +
->    publish; etc.).
-> 2. The naming conventions and parameter names that flow uses, so generated
->    tests stay consistent.
+> A skill is a **reusable operation template** that multiple tests invoke. It can be:
+>
+> - A **business flow**: multi-step sequences tied to your app's domain
+>   (create a case, submit a form, publish a timeline).
+> - A **technical pattern**: recurring infrastructure steps that aren't
+>   business-specific but are project-specific (login as a given role,
+>   wait for AI processing to finish, upload via a connector).
+>
+> In all cases a skill should have:
+> 1. A real, runnable code template that the coder can follow verbatim.
+> 2. The naming conventions and parameter names the operation uses, so
+>    generated tests stay consistent.
 > 3. Pointers to the page-object methods that implement each step.
 >
 > **What does NOT belong in a skill:**
 >
-> - Generic Playwright rules (those go in `docs/coding-rules.md`).
+> - Generic Playwright rules (those go in `.claude/context/coding-rules.md`).
 > - One-off patterns that only one test uses.
-> - Project-wide naming conventions (those go in `CLAUDE.md`).
+> - Project-wide naming conventions or coding style (those go in `CLAUDE.md`).
+> - Project-level facts like feature flags or test data IDs (those go in `.claude/context/project-facts.md`).
 
 ---
 

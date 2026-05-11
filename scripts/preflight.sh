@@ -126,12 +126,12 @@ else
 fi
 
 # ── 7. coding-rules.md ───────────────────────────────────────────────────────
-if [ -f "docs/coding-rules.md" ] || [ -f ".claude/coding-rules.md" ]; then
-  RULES_FILE="docs/coding-rules.md"
+if [ -f ".claude/context/coding-rules.md" ] || [ -f ".claude/coding-rules.md" ]; then
+  RULES_FILE=".claude/context/coding-rules.md"
   [ -f ".claude/coding-rules.md" ] && RULES_FILE=".claude/coding-rules.md"
   note_pass "coding_rules" "Coding rules: $RULES_FILE"
 else
-  note_warn "coding_rules" "No docs/coding-rules.md or .claude/coding-rules.md found. Architect will fall back to CLAUDE.md only. Recommended: copy the harness template and adapt to your UI library."
+  note_warn "coding_rules" "No .claude/context/coding-rules.md or .claude/coding-rules.md found. Architect will fall back to CLAUDE.md only. Recommended: copy the harness template and adapt to your UI library."
 fi
 
 # ── 8. MCP Playwright server ─────────────────────────────────────────────────

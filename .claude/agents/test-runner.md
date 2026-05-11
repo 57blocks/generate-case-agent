@@ -58,11 +58,10 @@ Identify:
 
 | Error Type | Symptoms | Owner |
 |------------|----------|-------|
-| **Selector error** | "locator.click: element not found", "strict mode violation" | test-runner (fix directly) |
 | **Timing error** | "locator.click: element not visible", "TimeoutError", "ant-spin blocking" | test-runner (fix directly) |
 | **Assertion mismatch** | "Expected: X, Received: Y" with correct element found | test-runner (fix assertion value) |
 | **Page context error** | "Target page, context or browser has been closed" | test-runner (fix navigation/lifecycle) |
-| **Requirement misunderstanding** | Step logic is fundamentally wrong, wrong UI flow for the role | escalate to test-analyst |
+| **Selector error** | "locator.click: element not found", "strict mode violation" — selector is wrong or stale | escalate to test-architect (only architect has MCP to re-validate) |
 | **Design error** | Wrong page object, wrong fixture, incompatible with existing code | escalate to test-architect |
 | **Environment constraint** | Feature flag not enabled, seed data missing, external API unavailable | report to user, cannot auto-fix |
 
@@ -129,31 +128,13 @@ After each fix:
 
 ## Phase 4: Escalation
 
-### Escalate to test-analyst when:
-- The wrong UI flow is being tested for the role (e.g. internal user UI assumed for external user)
-- A required precondition was not in the spec (e.g. feature flag, seed data)
-- The test logic is fundamentally misaligned with what the app actually does
-
-**Escalation report:**
-```markdown
-## Escalation to test-analyst
-
-### Failed test: {case_id} - {case_name}
-### Failing step: Unit N (Step {N} from spec)
-### Error: {error message}
-
-### Root cause: Requirement misunderstanding
-{explain what the app actually does vs what was specified}
-
-### Question for analyst:
-{specific question that would resolve the ambiguity}
-```
-
 ### Escalate to test-architect when:
+- A selector is not found or is stale — architect must re-validate via MCP
 - The selected page object method doesn't exist or has wrong signature
 - The Design Plan's validated selector does not match what exists in the code
 - The fixture injection is incompatible with the test structure
 - The approach causes a breaking change in other tests
+- The UI flow appears fundamentally wrong for the role — architect will determine whether this is a design issue or a requirement issue, and escalate to analyst if needed
 
 **Escalation report:**
 ```markdown

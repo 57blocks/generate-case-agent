@@ -146,8 +146,8 @@ environment, or test data, the analyst will ask follow-up questions.
 
 When a test fails, `test-runner` reads the stack trace, classifies the failure, and then:
 
-- fixes selector, timing, or assertion issues directly, or
-- escalates to `test-architect` (design issue) or `test-analyst` (requirement issue)
+- fixes timing, assertion, or page-context issues directly, or
+- escalates to `test-architect` for selector errors (only architect has MCP to re-validate) or design issues — architect will further escalate to `test-analyst` if the root cause is a requirement misunderstanding
 
 It will iterate up to 5 times before stopping and reporting back.
 
@@ -155,28 +155,30 @@ It will iterate up to 5 times before stopping and reporting back.
 
 ## Where project knowledge should live
 
-The harness separates project knowledge into four categories, each with its own place. **Do not
+The harness separates project knowledge into five categories, each with its own place. **Do not
 mix them together.**
 
 | Category | Example | Where it should live |
 |---|---|---|
-| **A. Generic Playwright / MCP rules** | "Don't gate clicks on `isVisible()`"; MCP validation workflow | The harness's `docs/coding-rules.md` template (copied by users into their own project) |
-| **B. Project-specific coding style** | "Files tab assertions omit file extensions"; "wait for `.ant-spin-spinning` to disappear" | The **target project's own** `CLAUDE.md` and/or `docs/coding-rules.md` |
-| **C. Business-flow code templates** | "How to log in + create a record + verify"; "how to upload a file + wait for AI processing + publish" | The **target project's own** `.claude/skills/*.md` (the harness ships only one example) |
-| **D. Real runnable code examples** | A passing spec and its Page Object | Your project's existing `tests/` and `pages/` — the architect will grep and reference them |
+| **A. Generic Playwright / MCP rules** | "Don't gate clicks on `isVisible()`"; MCP validation workflow | The harness's `.claude/context/coding-rules.md` template (copied by users into their own project) |
+| **B. Project-specific coding style** | "Files tab assertions omit file extensions"; "wait for `.ant-spin-spinning` to disappear" | The **target project's own** `CLAUDE.md` and/or `.claude/context/coding-rules.md` |
+| **C. Reusable operation skills** | Business flows ("log in + create + verify") or recurring technical patterns ("login as role X", "wait for AI processing") that multiple tests invoke | The **target project's own** `.claude/skills/*.md` (the harness ships only one example) |
+| **D. Project-level facts** | Feature flags that are on, stable test data IDs, env constraints | The **target project's** `.claude/context/project-facts.md` — written by summarizer, shared via git so the whole team benefits |
+| **E. Real runnable code examples** | A passing spec and its Page Object | Your project's existing `tests/` and `pages/` — the architect will grep and reference them |
 
-> This harness repository ships only **A** (template) and **C** (one example). **B** belongs
-> entirely to your own project, and **D** should be read directly from your codebase rather than
-> copied out separately.
+> This harness repository ships only **A** (template) and **C** (one example). **B** and **D**
+> belong entirely to your own project, and **E** should be read directly from your codebase.
 
 ### The role of Skills (Category C)
 
-`example-flow.md` is a **template** showing what a skill should look like. When a business flow
-is reused across multiple tests (for example, "log in → create → verify"), you should capture
-that flow's **real code snippets, naming conventions, and parameter parsing** in a skill file.
-Before designing a new test, `test-architect` scans the target project's `.claude/skills/`
-directory and, when keywords match, prefers code templates from those files rather than
-reinventing the flow.
+A skill is a **reusable operation template** that multiple tests invoke. It can be:
+
+- A **business flow**: multi-step sequences tied to your app's domain (create a case, submit a form, publish a timeline).
+- A **technical pattern**: recurring infrastructure steps that are project-specific but not business-specific (login as a given role, wait for AI processing to finish, upload via a connector).
+
+`example-flow.md` is a template showing what a skill should look like. Before designing a new
+test, `test-architect` scans the target project's `.claude/skills/` directory and, when keywords
+match, prefers code templates from those files rather than reinventing the flow.
 
 To see how to write a skill, read
 [`.claude/skills/example-flow.md`](.claude/skills/example-flow.md).
@@ -205,7 +207,7 @@ comes from, so you can fill in missing pieces systematically:
 | `{CASE_ID}`, `{CASE_NAME}` | Extracted from your screenshot / prompt | Nothing | - |
 | `<target-app-url>` (for architect MCP) | Taken from ROLE_CONFIG / env vars / a URL you provide | Project URL config, or a URL directly given to architect | architect can't validate selectors against the real UI |
 | `MENU.{X}`, `gotoMenu(...)` style navigation | Reads navigation helpers from your BasePage / shared helpers | Preferably a BasePage and named navigation helpers | generated tests may use inconsistent navigation |
-| Project coding style (assertions, loading waits) | Reads `docs/coding-rules.md` + `CLAUDE.md` | At least one of those docs, with clear conventions | architect falls back to generic rules |
+| Project coding style (assertions, loading waits) | Reads `.claude/context/coding-rules.md` + `CLAUDE.md` | At least one of those docs, with clear conventions | architect falls back to generic rules |
 
 ### Minimum project setup
 
@@ -223,7 +225,7 @@ Read the `preflight` results in two severity levels:
   what role to use every time
 - A Page Object directory — otherwise new methods may end up in odd places
 - `CLAUDE.md` — without it, the architect lacks project context and accuracy drops noticeably
-- `docs/coding-rules.md` — without it, the architect falls back to generic Playwright rules, so
+- `.claude/context/coding-rules.md` — without it, the architect falls back to generic Playwright rules, so
   component-library-specific wait / selector patterns will be wrong
 - MCP Playwright server — without it, the architect can only guess selectors, and the runner
   will repeatedly iterate on selector failures
@@ -251,8 +253,8 @@ Required:
 Strongly recommended:
 
 - A `CLAUDE.md` in the project root describing your coding conventions
-- A `docs/coding-rules.md` (start from the harness version — see
-  [`docs/coding-rules.md`](docs/coding-rules.md))
+- A `.claude/context/coding-rules.md` (start from the harness version — see
+  [`.claude/context/coding-rules.md`](.claude/context/coding-rules.md))
 - Page Objects placed somewhere globbable (`pages/**`, `tests/pageObjects/**`, etc.)
 - Playwright fixtures that inject your Page Objects so generated tests can use destructuring:
   `async ({ pageA, pageB }) => { … }`
@@ -274,35 +276,60 @@ the `Agent` tool.
 | IDE | Status | Notes |
 |---|---|---|
 | Claude Code | ✅ Native support | Full pipeline, automatic failure iteration, MCP selector validation |
-| Cursor | ⚠️ Adaptable | Rewrite each `.md` agent as `.cursor/rules/*.mdc`; trigger stages manually; lose automatic orchestration |
-| GitHub Copilot | ❌ Not practical | No sub-agents, no MCP, much lower accuracy |
+| Cursor | ⚠️ Adaptable | Cursor 2.4+ (GA Jan 2026) has true sub-agent isolation via `.cursor/agents/*.md`; automatic failure routing is not natively supported |
+| GitHub Copilot | ⚠️ Adaptable | Now supports MCP (GA July 2025) and agent mode, but the markdown-artifact pipeline architecture needs a full rewrite to adapt |
 
 ### Adapting to Cursor
 
-Cursor's Composer Agent is the closest counterpart to Claude Code in other IDEs, but it **does
-not support sub-agents**. A rough migration path is:
+As of Cursor 2.4 (January 2026, GA), Cursor has genuine sub-agent support via
+`.cursor/agents/*.md` files — each sub-agent runs in its **own isolated context window**,
+which is the correct migration target for this harness.
 
-1. Rewrite `.claude/agents/*.md` as `.cursor/rules/*.mdc`. Remove the frontmatter and keep the
-   main prompt body.
-2. Configure an MCP Playwright server in `~/.cursor/mcp.json` so the architect can still
-   validate selectors.
-3. Trigger the stages manually in Composer: `@analyst` → `@architect` → `@coder` → `@runner`.
-   You lose **automatic failure iteration**, so you need to rerun `@runner` yourself (or go back
-   to `@architect` for design issues).
-4. Keep the `/tmp/tc_*.md` artifact protocol — any IDE that can access the filesystem can use it.
+> **Important**: Do **not** use `.cursor/rules/*.mdc` for agent definitions — those are prompt
+> injections into a shared context, not isolated sub-agents.
 
-What you lose: automatic stage routing, automatic failure iteration, and per-stage model
-switching (Claude Code's `model: haiku` / `model: sonnet`).
+A rough migration path:
+
+1. Define each pipeline stage as a `.cursor/agents/*.md` file with YAML frontmatter (`name`,
+   `description`, `model`, `readonly`, `is_background`) followed by the agent's prompt body.
+   Each sub-agent has an isolated context window and only receives what the orchestrator passes
+   explicitly — it does not see the full conversation history.
+2. Configure MCP Playwright in **project-level** `.cursor/mcp.json` (the global
+   `~/.cursor/mcp.json` has known reliability issues and may be silently ignored).
+3. The orchestrator can automatically delegate to sub-agents via LLM-driven intent matching —
+   no manual trigger required for delegation itself. The `/tmp/tc_*.md` artifact protocol is
+   physically workable, but you must instruct each agent explicitly in its prompt to write to
+   and read from the correct artifact path.
+4. **Automatic failure routing is not natively supported.** If `runner` fails and needs to
+   escalate to `architect`, this must be a human decision. There is no built-in mechanism for a
+   failed sub-agent to automatically re-invoke an earlier stage.
+
+What you lose compared to Claude Code: deterministic pipeline routing, automatic failure
+iteration, and reliable per-stage model switching (a known Cursor 2.4 bug causes sub-agents to
+inherit the parent model rather than using their designated model).
 
 ### Adapting to Copilot
 
-Not recommended. Copilot Chat has no concept of sub-agents, and Copilot Workspace does not
-support MCP. The accuracy of this pipeline depends heavily on **real-time MCP selector
-validation**. Without it, the architect can only guess selectors from class names, and the
-runner can get stuck in loops of selector failures with no real fix.
+As of 2026, GitHub Copilot supports named agents via `.github/agents/*.agent.md` files (VS Code
+and Visual Studio 2026+), MCP (including Playwright MCP), and shared filesystem access. A
+migration is technically feasible, but the harness's automatic orchestration pattern is not
+natively supported.
 
-If you absolutely must try it, merge the prompts from all 5 stages into one very long prompt for
-Copilot Agent and accept a clear drop in accuracy.
+A rough migration path:
+
+1. Define each pipeline stage as a `.github/agents/*.agent.md` file with YAML frontmatter
+   (`name`, `description`, `model`, `tools`, `mcp-servers`) followed by the agent's prompt body.
+2. Configure MCP Playwright in your workspace. The `/tmp/tc_*.md` artifact protocol is physically
+   workable — the shared filesystem allows agents to read and write files — but you must instruct
+   each agent explicitly in its prompt to write output to the correct artifact path.
+3. Use the `handoffs` frontmatter property to create guided stage transitions. Note that handoffs
+   require a **human click** in the UI — there is no mechanism for the orchestrator to
+   autonomously spawn the next agent without user interaction.
+4. Failure routing (e.g., runner escalating back to architect) is not automatic. You must
+   manually decide which stage to re-invoke on failure.
+
+What you lose compared to Claude Code: automatic stage routing, automatic failure iteration,
+guaranteed per-stage context isolation, and per-stage model switching.
 
 ---
 
@@ -312,7 +339,7 @@ Copilot Agent and accept a clear drop in accuracy.
   which stages use Sonnet vs. Haiku. This is the quality / cost tradeoff.
 - **Iteration cap** — `test-runner` defaults to 5 iterations max. Change Step 4 in
   `add-test.md`.
-- **Coding style** — the agent reads the target project's `docs/coding-rules.md`. Write rules
+- **Coding style** — the agent reads the target project's `.claude/context/coding-rules.md`. Write rules
   there (or in your project's `CLAUDE.md`) to teach the harness your conventions.
 - **Directory structure** — the architect discovers `tests/**`, `pages/**`, `e2e/**`, etc. via
   globbing. No hardcoded paths need to be changed.
@@ -335,8 +362,9 @@ Copilot Agent and accept a clear drop in accuracy.
 
 ```text
 .claude/agents/              6 agents (orchestrator + 5 pipeline stages)
-.claude/skills/              Skill templates (business-flow code examples)
-docs/coding-rules.md         Reference coding-rules template (for target projects to copy and adapt)
+.claude/skills/              Skill templates (reusable operation templates — business flows or technical patterns)
+.claude/context/coding-rules.md         Reference coding-rules template (for target projects to copy and adapt)
+.claude/context/project-facts.md        (written by summarizer at runtime) Project-level facts shared across the team
 scripts/preflight.sh         Run once after installation to check project readiness for the harness
 scripts/test-quick.sh        Used by runner: runs a single test without global setup
 scripts/typecheck.sh         Used by coder: `tsc --noEmit` gate

@@ -25,10 +25,10 @@ screenshot + one trigger phrase ("增加 SA-001 用例", "add test for TC-050", 
   test-coder.md        #   3. Code generation
   test-runner.md       #   4. Test execution + failure repair
   test-summarizer.md   #   5. Knowledge extraction back into target project
-.claude/skills/        # Skill templates (business-flow code samples)
+.claude/skills/        # Skill templates (reusable operation templates — business flows or technical patterns)
   example-flow.md      #   Reference example — not a working skill
 .claude/settings.local.json  # Local permission allowlist
-docs/coding-rules.md   # Reference template for target projects (not loaded by the harness itself)
+.claude/context/coding-rules.md   # Reference template for target projects (not loaded by the harness itself)
 scripts/               # Helper scripts the agents shell out to
   cleanup-artifacts.sh #   Removes /tmp/tc_*.md after a run
   test-quick.sh        #   Single-test runner used by test-runner
@@ -58,18 +58,19 @@ User screenshot + trigger phrase
 
 ## Where different kinds of knowledge live
 
-The harness separates four kinds of knowledge. Keep them separate when editing.
+The harness separates five kinds of knowledge. Keep them separate when editing.
 
 | Kind | Example | Where it lives |
 |---|---|---|
-| **A. Generic Playwright/MCP rules** | "Don't gate clicks on `isVisible()`"; MCP workflow | This repo's `docs/coding-rules.md` (a template the user copies into their project) |
-| **B. Project-specific coding style** | "Files tab assertions omit the extension"; "wait for `.ant-spin-spinning`" | The **target project's** `CLAUDE.md` and/or `docs/coding-rules.md` |
-| **C. Business-flow code templates** | "How to create a record + verify"; "how to upload + wait for AI processing" | The **target project's** `.claude/skills/*.md` (this repo only ships `example-flow.md` as a reference) |
-| **D. Real working examples** | A passing spec + its page-object methods | Already in the target project's `tests/` and `pages/` — the architect agent globs and reads them |
+| **A. Generic Playwright/MCP rules** | "Don't gate clicks on `isVisible()`"; MCP workflow | This repo's `.claude/context/coding-rules.md` (a template the user copies into their project) |
+| **B. Project-specific coding style** | "Files tab assertions omit the extension"; "wait for `.ant-spin-spinning`" | The **target project's** `CLAUDE.md` and/or `.claude/context/coding-rules.md` |
+| **C. Reusable operation skills** | Business flows ("create record + verify"), or recurring technical patterns ("login as role X", "wait for AI processing to finish") that multiple tests invoke | The **target project's** `.claude/skills/*.md` (this repo only ships `example-flow.md` as a reference) |
+| **D. Project-level facts** | Feature flags that are on, stable test data IDs, env constraints | The **target project's** `.claude/context/project-facts.md` — written by summarizer, read by architect, lives in git so the whole team shares it |
+| **E. Real working examples** | A passing spec + its page-object methods | Already in the target project's `tests/` and `pages/` — the architect agent globs and reads them |
 
 This repo only ships **A** (template) and **C** (one example). It must never
-ship **B** (that's the user's project) and doesn't need to ship **D** (lives
-in user code).
+ship **B** or **D** (those belong to the user's project) and doesn't need to
+ship **E** (lives in user code).
 
 ## Rules for modifying the harness
 
@@ -77,7 +78,7 @@ in user code).
 
 The harness is meant to drop into **any** Playwright project. Anything specific
 to one application belongs in the target project's `CLAUDE.md` or
-`docs/coding-rules.md`, not in an agent file here.
+`.claude/context/coding-rules.md`, not in an agent file here.
 
 **Forbidden in agent files:**
 - Hardcoded absolute paths (`/Users/<name>/Workspace/<project>/…`).
@@ -121,7 +122,7 @@ move it to `test-architect.md`. The coder doesn't decide selectors.
 If you find yourself opening `tests/` here, you're in the wrong directory. The
 harness is exercised by:
 
-1. Copying `.claude/agents/`, `scripts/`, and (optionally) `docs/coding-rules.md`
+1. Copying `.claude/agents/`, `scripts/`, and (optionally) `.claude/context/coding-rules.md`
    into a target Playwright project.
 2. Triggering the `add-test` agent there.
 
@@ -136,7 +137,7 @@ not here.
 - Update the agent contract table in this file (CLAUDE.md).
 - Keep artifact filenames consistent: `tc_{case_id}_{stage}.md`.
 
-### 6. Don't treat `docs/coding-rules.md` as a strong constraint
+### 6. Don't treat `.claude/context/coding-rules.md` as a strong constraint
 
 That file is a **reference template** for target projects to copy and adapt. It
 is not loaded by any agent in this repo. Editing it changes what target

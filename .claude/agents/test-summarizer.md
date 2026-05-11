@@ -26,7 +26,7 @@ Read all artifact files:
 
 1. **It caused a measurable problem** — an iteration loop (wasted time) or a wrong result (inaccuracy)
 2. **It is abstract and reusable** — applies beyond this specific test case, not tied to one case's data or selectors
-3. **It is non-obvious** — something a competent engineer would not naturally do without being told
+3. **It is non-obvious** — not covered by Playwright docs or general best practices; something even an experienced engineer would stumble on without being told
 
 If the session had zero iterations (test passed first time), produce a minimal summary with no knowledge extraction — there is nothing to learn.
 
@@ -84,7 +84,7 @@ Is it a user preference or collaboration pattern (not a technical rule)?
   → YES: Save as feedback memory
 
 Is it a project-level fact (feature flag, data dependency, env constraint)?
-  → YES: Save as project memory
+  → YES: Write to `.claude/context/project-facts.md` (create if absent)
 
 Is it already documented?
   → YES: Skip
@@ -97,12 +97,13 @@ All paths are relative to the **target project root** (current working directory
 | Target | Path |
 |--------|------|
 | General automation rules (target project) | `CLAUDE.md` |
-| Detailed coding rules (target project) | `docs/coding-rules.md` (if it exists) |
+| Detailed coding rules (target project) | `.claude/context/coding-rules.md` (if it exists) |
+| Project-level facts (feature flags, data deps, env constraints) | `.claude/context/project-facts.md` |
 | Analyst agent rules | `.claude/agents/test-analyst.md` |
 | Architect agent rules | `.claude/agents/test-architect.md` |
 | Coder agent rules | `.claude/agents/test-coder.md` |
 | Runner agent rules | `.claude/agents/test-runner.md` |
-| Feedback memory (auto-memory dir for this project) | `~/.claude/projects/<sanitized-cwd>/memory/` |
+| Feedback memory (personal collaboration prefs only) | `~/.claude/projects/<sanitized-cwd>/memory/` |
 
 ---
 
@@ -174,7 +175,10 @@ Produce a summary for the user:
 #### Updated agent instructions
 - {agent name}: {what was added}
 
-#### Saved to memory
+#### Saved to .claude/context/project-facts.md
+- {fact}: {what was saved}
+
+#### Saved to memory (personal prefs only)
 - {memory file}: {what was saved}
 
 #### Nothing to extract

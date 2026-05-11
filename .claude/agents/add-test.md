@@ -130,8 +130,7 @@ Pass the run command from coder. Instruct runner to:
 | ----------------------------------------- | --------------------------------------------------------------------------------------------- |
 | Test passes                               | Proceed to Step 5                                                                             |
 | Runner fixes issue and re-runs            | Stay in runner loop                                                                           |
-| Runner escalates to **test-analyst**      | Re-run analyst with run_report.md + original requirement.md → then architect → coder → runner |
-| Runner escalates to **test-architect**    | Re-run architect with run_report.md + original requirement.md → then coder → runner           |
+| Runner escalates to **test-architect**    | Re-run architect with run_report.md + requirement.md → then coder → runner. Architect may further escalate to analyst if the root cause is a requirement misunderstanding. |
 | Runner reports **environment constraint** | Relay to user and stop — do not loop                                                          |
 | User says "stop"                          | Skip runner, proceed to Step 5 with partial results                                           |
 
