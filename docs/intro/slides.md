@@ -22,6 +22,96 @@ generate-case-agent · 分享会 · ~30 min
 57blocks
 </div>
 
+
+---
+layout: section
+---
+
+# 为什么要做这个？
+
+---
+
+## 手写测试的重复劳动
+
+每次写一条 Playwright 测试，你都在做一模一样的几件事：
+
+<div class="flex items-center gap-1 my-8">
+<div class="border border-gray-200 rounded-lg p-3 text-center flex-1">
+  <div class="text-2xl mb-2">📄</div>
+  <div class="text-xs font-bold mb-1">读用例</div>
+  <div class="text-xs opacity-70">把步骤翻译成代码逻辑</div>
+</div>
+<div class="text-gray-300 text-xl">→</div>
+<div class="border border-gray-200 rounded-lg p-3 text-center flex-1">
+  <div class="text-2xl mb-2">🔍</div>
+  <div class="text-xs font-bold mb-1">确认 selector</div>
+  <div class="text-xs opacity-70">人工定位、反复试错</div>
+</div>
+<div class="text-gray-300 text-xl">→</div>
+<div class="border border-gray-200 rounded-lg p-3 text-center flex-1">
+  <div class="text-2xl mb-2">✍️</div>
+  <div class="text-xs font-bold mb-1">写 spec</div>
+  <div class="text-xs opacity-70">fixture 注入、设计 Page Object</div>
+</div>
+<div class="text-gray-300 text-xl">→</div>
+<div class="border border-gray-200 rounded-lg p-3 text-center flex-1">
+  <div class="text-2xl mb-2">🐛</div>
+  <div class="text-xs font-bold mb-1">调试</div>
+  <div class="text-xs opacity-70">timing、spinner、虚拟滚动……</div>
+</div>
+</div>
+
+<div class="border border-green-300 rounded-lg p-4 bg-green-50 text-center">
+  <span class="font-bold text-green-700">这些步骤是有规律的——有规律的事情可以让 agent 来做。</span>
+</div>
+
+---
+
+## 这套 harness 做了什么
+
+<div class="grid grid-cols-2 gap-12 items-start mt-6">
+<div>
+  <div class="text-sm font-bold text-gray-400 mb-4">之前：全靠你</div>
+  <div class="flex flex-col gap-2 text-sm opacity-60">
+    <div class="flex items-center gap-3 border border-gray-200 bg-gray-50 rounded-lg px-4 py-3">
+      <span class="text-xl">📄</span><span>自己读懂用例</span>
+    </div>
+    <div class="text-center text-gray-300 text-lg">↓</div>
+    <div class="flex items-center gap-3 border border-gray-200 bg-gray-50 rounded-lg px-4 py-3">
+      <span class="text-xl">🔍</span><span>在浏览器里人工确认 selector，设计自动化用例</span>
+    </div>
+    <div class="text-center text-gray-300 text-lg">↓</div>
+    <div class="flex items-center gap-3 border border-gray-200 bg-gray-50 rounded-lg px-4 py-3">
+      <span class="text-xl">✍️</span><span>写 spec，调试 timing 问题</span>
+    </div>
+    <div class="text-center text-gray-300 text-lg">↓</div>
+    <div class="flex items-center gap-3 border border-gray-200 bg-gray-50 rounded-lg px-4 py-3">
+      <span class="text-xl">🐛</span><span>跑测试，看报错，手动修，下次遇到同样的坑重来</span>
+    </div>
+  </div>
+</div>
+
+<div>
+  <div class="text-sm font-bold text-green-600 mb-4">之后：你只做这三件事</div>
+  <div class="flex flex-col gap-3 text-sm">
+    <div class="flex items-center gap-3 border border-blue-200 bg-blue-50 rounded-lg px-4 py-3">
+      <span class="text-xl">🖼️</span>
+      <span><strong>丢截图</strong>，加一句触发短语</span>
+    </div>
+    <div class="text-center text-gray-300 text-lg">↓</div>
+    <div class="flex items-center gap-3 border border-gray-200 bg-gray-50 rounded-lg px-4 py-3">
+      <span class="text-xl">⏳</span>
+      <span><strong>等待</strong>，pipeline 自动跑完</span>
+    </div>
+    <div class="text-center text-gray-300 text-lg">↓</div>
+    <div class="flex items-center gap-3 border border-green-200 bg-green-50 rounded-lg px-4 py-3">
+      <span class="text-xl">✅</span>
+      <span><strong>拿到</strong>可运行的测试 + 经验沉淀</span>
+    </div>
+  </div>
+</div>
+</div>
+
 ---
 layout: section
 ---
@@ -61,116 +151,129 @@ layout: section
 
 <div class="text-sm opacity-70 mb-4">单个 LLM prompt 做全套：需求理解 → 设计 → 写代码 → 调试 → 总结</div>
 
-<div class="grid grid-cols-2 gap-4 mb-6">
-<div class="border border-red-200 rounded-lg p-4 bg-red-50">
-  <div class="font-bold text-red-600 mb-1">💥 上下文爆炸</div>
-  <div class="text-sm">调试输出全堆在一个 context 里，越到后期质量越差</div>
+<div class="grid grid-cols-2 gap-4 mb-5">
+<div class="border border-slate-200 rounded-lg p-4 bg-slate-50">
+  <div class="font-bold text-slate-700 mb-2">📦 上下文无边界</div>
+  <div class="text-sm text-gray-600">复杂任务的所有中间状态堆在同一个 prompt 里，越到后期模型能"看到"的有效信息比例越低，质量下降</div>
 </div>
-<div class="border border-orange-200 rounded-lg p-4 bg-orange-50">
-  <div class="font-bold text-orange-600 mb-1">🔍 错误难归因</div>
-  <div class="text-sm">selector 写错了？还是需求理解错了？prompt 里分不清</div>
+<div class="border border-slate-200 rounded-lg p-4 bg-slate-50">
+  <div class="font-bold text-slate-700 mb-2">🔀 职责边界模糊</div>
+  <div class="text-sm text-gray-600">需求理解、方案设计、代码生成、调试全混在一起，出了问题不知道是哪个环节的错，难以定向修复</div>
 </div>
-<div class="border border-yellow-200 rounded-lg p-4 bg-yellow-50">
-  <div class="font-bold text-yellow-600 mb-1">🔄 没有迭代回路</div>
-  <div class="text-sm">测试跑挂了，单 prompt 不知道该怎么"自己修"</div>
+<div class="border border-slate-200 rounded-lg p-4 bg-slate-50">
+  <div class="font-bold text-slate-700 mb-2">🔁 缺乏自修复能力</div>
+  <div class="text-sm text-gray-600">任务失败时，单 prompt 没有"分析失败原因 → 回到对应阶段修复"的机制，只能整体重试</div>
 </div>
-<div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-  <div class="font-bold text-gray-600 mb-1">📭 知识不沉淀</div>
-  <div class="text-sm">这次踩的坑，下次重新踩</div>
+<div class="border border-slate-200 rounded-lg p-4 bg-slate-50">
+  <div class="font-bold text-slate-700 mb-2">🗑️ 经验无法复用</div>
+  <div class="text-sm text-gray-600">每次运行都是一次性的，过程中积累的判断和规律随着对话结束而消失，下次从头来</div>
 </div>
 </div>
 
 <div class="border border-green-300 rounded-lg p-4 bg-green-50">
-  <span class="font-bold text-green-700">Harness 的做法：</span>
-  <span class="text-sm">每个专职 agent 只做一件事，通过 artifact 文件交接，失败时按类型回流到对应阶段修复。</span>
+  <span class="font-bold text-green-700">Harness 的价值：</span>
+  <span class="text-sm text-gray-700">将复杂任务拆成职责单一的阶段，每个阶段有独立上下文、明确的输入输出和边界。失败时精确定位到出问题的阶段，经验可以跨次复用。</span>
 </div>
 
 ---
 layout: section
 ---
 
-# 为什么要做这个？
+# 这套 harness 怎么用
 
 ---
 
-## 手写测试的重复劳动
+## 假设你用例长这样
 
-每次写一条 Playwright 测试，你都在做一模一样的几件事：
+<img src="./assets/test case.png" class="rounded shadow mx-auto mt-8" style="max-height: 400px;" />
 
-<div class="flex items-center gap-1 my-8">
-<div class="border border-gray-200 rounded-lg p-3 text-center flex-1">
-  <div class="text-2xl mb-2">📄</div>
-  <div class="text-xs font-bold mb-1">读用例</div>
-  <div class="text-xs opacity-70">把 CSV 步骤翻译成代码逻辑</div>
+---
+
+## 触发方式
+
+<div class="grid grid-cols-[3fr_7fr] gap-6 items-center mb-4">
+<div class="text-sm">
+
+把用例截图拖进 Claude Code 对话，加一句话：
+
+```
+增加 SA-001 用例
+add test for TC-050
+更新 TC-050 用例
+在 supioadmin 文件夹下增加用例
+```
+
 </div>
-<div class="text-gray-300 text-xl">→</div>
-<div class="border border-gray-200 rounded-lg p-3 text-center flex-1">
-  <div class="text-2xl mb-2">🔍</div>
-  <div class="text-xs font-bold mb-1">找 Page Object</div>
-  <div class="text-xs opacity-70">确认 selector 对不对</div>
-</div>
-<div class="text-gray-300 text-xl">→</div>
-<div class="border border-gray-200 rounded-lg p-3 text-center flex-1">
-  <div class="text-2xl mb-2">🖱️</div>
-  <div class="text-xs font-bold mb-1">试 selector</div>
-  <div class="text-xs opacity-70">在真实 UI 上反复试错</div>
-</div>
-<div class="text-gray-300 text-xl">→</div>
-<div class="border border-gray-200 rounded-lg p-3 text-center flex-1">
-  <div class="text-2xl mb-2">✍️</div>
-  <div class="text-xs font-bold mb-1">写 spec</div>
-  <div class="text-xs opacity-70">fixture 注入、断言格式</div>
-</div>
-<div class="text-gray-300 text-xl">→</div>
-<div class="border border-gray-200 rounded-lg p-3 text-center flex-1">
-  <div class="text-2xl mb-2">🐛</div>
-  <div class="text-xs font-bold mb-1">调试</div>
-  <div class="text-xs opacity-70">timing、spinner、虚拟滚动……</div>
+<div>
+
+<video src="./assets/sample.mp4" class="rounded shadow w-full" style="max-height: 340px;" controls></video>
+
 </div>
 </div>
 
-<div class="border border-green-300 rounded-lg p-4 bg-green-50 text-center">
-  <span class="font-bold text-green-700">这些步骤是有规律的——有规律的事情可以让 agent 来做。</span>
+<div class="border-t border-gray-200 pt-3 text-sm grid grid-cols-3 gap-4">
+<div>① role 没写清楚 → analyst 问你</div>
+<div>② 测试数据缺失 → analyst 问你</div>
+<div>③ 共用方法有变动 → architect 给你 <code>⚠️ BREAKING RISK</code> 提示</div>
 </div>
 
 ---
 
-## 这套 harness 做了什么
+## 产出结果
 
-<div class="grid grid-cols-2 gap-8 items-center">
+<div class="grid grid-cols-[5fr_5fr] gap-6 items-center">
 <div class="text-sm">
 
-**你之前的工作流：**
+architect 读取 `.claude/skills/` 里的可复用操作模板，照单生成，不猜不发明。
 
-<div class="flex items-center gap-2 flex-wrap mt-3 opacity-60">
-  <span class="border border-gray-300 rounded px-2 py-1">截图</span> →
-  <span class="border border-gray-300 rounded px-2 py-1">你来读</span> →
-  <span class="border border-gray-300 rounded px-2 py-1">你来设计</span> →
-  <span class="border border-gray-300 rounded px-2 py-1">你来写代码</span> →
-  <span class="border border-gray-300 rounded px-2 py-1">你来调试</span>
+```typescript
+test("create a case", async ({ casesPage }) => {
+  const { caseName } = await casesPage.caseFactory
+    .withInternalIdentity()
+    .withName("placeholder")
+    .withConnector(Connector.DEFAULT)
+    .withCaseType("MVA")
+    .withPackage(PackageCode.Chronology)
+    .withCompany("QA Test CA Company")
+    .create();
+
+  expect(caseName).toBeTruthy();
+});
+```
+
+基于 `.claude/skills/create-case.md` 模板生成
+
 </div>
+<div>
 
-</div>
-<div class="text-sm">
-
-**用了 harness 之后：**
-
-<div class="mt-3 space-y-1">
-  <div class="bg-blue-50 border border-blue-200 rounded px-3 py-1.5">🖼️ 截图 + "增加 TC-050 用例"</div>
-  <div class="text-center text-gray-300">↓</div>
-  <div class="bg-gray-50 border border-gray-200 rounded px-3 py-1.5"><span class="font-mono text-xs font-bold">analyst</span> &nbsp; 读截图，拆成原子步骤</div>
-  <div class="text-center text-gray-300">↓</div>
-  <div class="bg-gray-50 border border-gray-200 rounded px-3 py-1.5"><span class="font-mono text-xs font-bold">architect</span> &nbsp; 选 Page Object，用 MCP 验 selector</div>
-  <div class="text-center text-gray-300">↓</div>
-  <div class="bg-gray-50 border border-gray-200 rounded px-3 py-1.5"><span class="font-mono text-xs font-bold">coder</span> &nbsp; 照着设计写代码，不猜 selector</div>
-  <div class="text-center text-gray-300">↓</div>
-  <div class="bg-gray-50 border border-gray-200 rounded px-3 py-1.5"><span class="font-mono text-xs font-bold">runner</span> &nbsp; 跑测试，按 stack trace 分类失败，自动修</div>
-  <div class="text-center text-gray-300">↓</div>
-  <div class="bg-gray-50 border border-gray-200 rounded px-3 py-1.5"><span class="font-mono text-xs font-bold">summarizer</span> &nbsp; 把这次踩的坑按类型写回项目知识库</div>
-</div>
+<img src="./assets/output.png" class="rounded shadow w-full" />
 
 </div>
 </div>
+
+---
+
+## 运行过程中你会看到什么
+
+```text
+📋 Iteration 1: running test...
+  ✗ Failed: locator.click: element not found
+  → Classifying: selector error
+  → Fixing: button[data-icon="edit"] → button:has([data-icon="edit"])
+
+📋 Iteration 2: running test...
+  ✓ Passed
+
+📝 Session Summary
+  - Implemented: TC-050 verify flowsheet event time display
+  - Reused: FlowsheetsPage.openEvent()
+  - Added to CLAUDE.md: Ant Design icon selector pattern
+```
+
+<br>
+
+失败自己修，最多 5 次；超过就停下来告诉你下一步怎么排查。
+
 
 ---
 layout: section
@@ -363,106 +466,6 @@ layout: section
   </div>
 </div>
 </div>
-
----
-layout: section
----
-
-# 怎么用
-
----
-
-## 假设你用例长这样
-
-<img src="./assets/test case.png" class="rounded shadow mx-auto mt-8" style="max-height: 400px;" />
-
----
-
-## 触发方式
-
-<div class="grid grid-cols-[3fr_7fr] gap-6 items-center" style="height: 65%">
-<div>
-
-把用例截图拖进 Claude Code 对话，加一句话：
-
-```
-增加 SA-001 用例
-add test for TC-050
-更新 TC-050 用例
-在 supioadmin 文件夹下增加用例
-```
-
-</div>
-<div>
-
-<img src="./assets/agent start.png" class="rounded shadow w-full" style="max-height: 340px; object-fit: contain;" />
-
-</div>
-</div>
-
-<div class="border-t border-gray-200 pt-3 mt-2 text-sm grid grid-cols-3 gap-4">
-<div>① role 没写清楚 → analyst 问你</div>
-<div>② 测试数据缺失 → analyst 问你</div>
-<div>③ 共用方法有变动 → architect 给你 <code>⚠️ BREAKING RISK</code> 提示</div>
-</div>
-
----
-
-## 产出结果
-
-<div class="grid grid-cols-[5fr_5fr] gap-6 items-center">
-<div class="text-sm">
-
-architect 读取 `.claude/skills/` 里的可复用操作模板，照单生成，不猜不发明。
-
-```typescript
-test("create a case", async ({ casesPage }) => {
-  const { caseName } = await casesPage.caseFactory
-    .withInternalIdentity()
-    .withName("placeholder")
-    .withConnector(Connector.DEFAULT)
-    .withCaseType("MVA")
-    .withPackage(PackageCode.Chronology)
-    .withCompany("QA Test CA Company")
-    .create();
-
-  expect(caseName).toBeTruthy();
-});
-```
-
-基于 `.claude/skills/create-case.md` 模板生成
-
-</div>
-<div>
-
-<img src="./assets/output.png" class="rounded shadow w-full" />
-
-</div>
-</div>
-
----
-
-## 运行过程中你会看到什么
-
-```text
-📋 Iteration 1: running test...
-  ✗ Failed: locator.click: element not found
-  → Classifying: selector error
-  → Fixing: button[data-icon="edit"] → button:has([data-icon="edit"])
-
-📋 Iteration 2: running test...
-  ✓ Passed
-
-📝 Session Summary
-  - Implemented: TC-050 verify flowsheet event time display
-  - Reused: FlowsheetsPage.openEvent()
-  - Added to CLAUDE.md: Ant Design icon selector pattern
-```
-
-<br>
-
-失败自己修，最多 5 次；超过就停下来告诉你下一步怎么排查。
-
 
 ---
 layout: section
